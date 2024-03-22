@@ -1,0 +1,9 @@
+image:
+  driver: registry.lqingcloud.cn/develop/extrootfs:latest
+  registrar: registry.lqingcloud.cn/registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0
+  provisioner: registry.lqingcloud.cn/registry.k8s.io/sig-storage/csi-provisioner:v3.6.3
+  pullPolicy: "Always"
+
+
+provisioner: "driver.extrootfs.io"
+data: /opt/extrootfs/

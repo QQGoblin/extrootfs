@@ -1,0 +1,139 @@
+---
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: {{ .Release.Name }}-driver
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      k8s.app: {{ .Release.Name }}-driver
+      extrootfs: driver
+  template:
+    metadata:
+      labels:
+        k8s.app: {{ .Release.Name }}-driver
+        extrootfs: driver
+    spec:
+      serviceAccount: {{ .Release.Name }}-driver
+      priorityClassName: system-node-critical
+      hostNetwork: true
+      hostPID: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: driver
+          image: {{ .Values.image.driver }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "-v=5"
+            - "--nodeid=$(NODE_ID)"
+            - "--endpoint=unix://extrootfs/extrootfs.sock"
+            - "--drivername={{ .Values.provisioner }}"
+            - "--base={{ .Values.data }}"
+          env:
+            - name: NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          securityContext:
+            privileged: true
+            capabilities:
+              add: [ "SYS_ADMIN" ]
+            allowPrivilegeEscalation: true
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /extrootfs
+            # NodeStageVolume mount dir
+            - name: stage-dir
+              mountPath: /var/lib/kubelet/plugins
+              mountPropagation: "Bidirectional"
+            # NodePublishVolume mount dir
+            - name: publish-dir
+              mountPath: /var/lib/kubelet/pods
+              mountPropagation: "Bidirectional"
+            # timezone
+            - name: timezone
+              mountPath: /etc/localtime
+            # extrootfs
+            - name: data
+              mountPath: {{ .Values.data }}
+            - name: host-dev
+              mountPath: /dev
+            - name: host-sys
+              mountPath: /sys
+        - name: csi-provisioner
+          image: {{ .Values.image.provisioner }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "-v=5"
+            - "--csi-address=/extrootfs/extrootfs.sock"
+            - "--leader-election=true"
+            - "--feature-gates=Topology=true"
+            - "--strict-topology=true"
+            - "--extra-create-metadata=true"
+            - "--worker-threads=5"
+            - "--default-fstype=xfs"
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /extrootfs
+              name: socket-dir
+            - name: timezone
+              mountPath: /etc/localtime
+        - name: node-driver-registrar
+          image: {{ .Values.image.registrar }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "--v=5"
+            - "--csi-address=/extrootfs/extrootfs.sock"
+            - "--kubelet-registration-path=/var/lib/kubelet/plugins/{{ .Values.provisioner }}/extrootfs.sock"
+          env:
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /extrootfs
+            - name: registration-dir
+              mountPath: /registration
+            - name: timezone
+              mountPath: /etc/localtime
+          securityContext:
+            privileged: true
+      volumes:
+        # For CSI Connect
+        - name: socket-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/{{ .Values.provisioner }}
+            type: DirectoryOrCreate
+        # For CSI registry to kubelet
+        - name: registration-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins_registry/
+            type: Directory
+        # For NodeStageVolume
+        - name: stage-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins
+            type: Directory
+        # For NodePublishVolume
+        - name: publish-dir
+          hostPath:
+            path: /var/lib/kubelet/pods
+            type: DirectoryOrCreate
+        # For timezone
+        - name: timezone
+          hostPath:
+            path: /etc/localtime
+        # For extrootfs
+        - name: data
+          hostPath:
+            path: {{ .Values.data }}
+            type: DirectoryOrCreate
+        - name: host-dev
+          hostPath:
+            path: /dev
+        - name: host-sys
+          hostPath:
+            path: /sys
