@@ -16,16 +16,11 @@ import (
 
 // NBD collects details about the used NBD device.
 type NBD struct {
-	// /sys/block/nbd0
-	BlockPath string
-	// /dev/nbd0
-	DevicePath string
-	// nbd0
-	Name string
-	// PID of the nbd device
-	PID string
-	// /sys/block/nbd0/pid
-	PIDFile string
+	BlockPath  string `json:"block_path"`
+	DevicePath string `json:"device_path"`
+	Name       string `json:"name"`
+	PID        string `json:"pid"`
+	PIDFile    string `json:"pid_file"`
 }
 
 var (
@@ -69,6 +64,11 @@ func (n *NBD) Connect(image string, format string) error {
 
 // Disconnect the NBD device from qemu-nbd to free it.
 func (n *NBD) Disconnect() error {
+
+	if n.DevicePath == "" {
+		return nil
+	}
+
 	log.DebugLogMsg("Disconnect NBD from %s", n.Name)
 
 	if err := exec.Command("qemu-nbd", "--disconnect", n.DevicePath).Run(); err != nil {
@@ -89,11 +89,11 @@ func (n *NBD) Disconnect() error {
 // Allocate checks for nbd kernel module and finds an empty NBD device to use.
 func (n *NBD) allocate() error {
 
-	if !n.isNBDLoaded() {
-		if err := n.loadNBD(); err != nil {
-			return errors.Wrap(err, "nbd.allocate")
-		}
-	}
+	//if !n.isNBDLoaded() {
+	//	if err := n.loadNBD(); err != nil {
+	//		return errors.Wrap(err, "nbd.allocate")
+	//	}
+	//}
 
 	files, err := filepath.Glob("/sys/block/nbd*")
 	if err != nil {

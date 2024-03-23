@@ -2,6 +2,7 @@ package driver
 
 import (
 	csicommon "github.com/QQGoblin/extrootfs/pkg/csi-common"
+	"github.com/QQGoblin/extrootfs/pkg/util/lock"
 	"github.com/QQGoblin/extrootfs/pkg/util/log"
 	"github.com/container-storage-interface/spec/lib/go/csi"
 )
@@ -9,35 +10,40 @@ import (
 const (
 	DefaultDriverName    = "driver.extrootfs.io"
 	defaultDriverVersion = "1"
-	topologyKeyNode      = "topology.qcow2.extrootfs.io/node"
+	topologyKeyNode      = "topology.extrootfs.io/node"
 )
 
 type Driver struct {
-	csiDriver *csicommon.CSIDriver
-	servers   *csicommon.Servers
-	name      string
-	nodeid    string
-	endpoint  string
-	basePath  string
+	csiDriver              *csicommon.CSIDriver
+	servers                *csicommon.Servers
+	name                   string
+	nodeid                 string
+	endpoint               string
+	basePath               string
+	ctrlCapCreateAndDelete bool
 }
 
 // NewDriver returns new ceph driver.
-func NewDriver(name, nodeid, endpoint, basePath string) *Driver {
+func NewDriver(name, nodeid, endpoint, basePath string, ctrlCapCreateAndDelete bool) *Driver {
 	return &Driver{
-		csiDriver: csicommon.NewCSIDriver(name, nodeid, endpoint),
-		servers:   &csicommon.Servers{},
-		name:      name,
-		nodeid:    nodeid,
-		endpoint:  endpoint,
-		basePath:  basePath,
+		csiDriver:              csicommon.NewCSIDriver(name, nodeid, endpoint),
+		servers:                &csicommon.Servers{},
+		name:                   name,
+		nodeid:                 nodeid,
+		endpoint:               endpoint,
+		basePath:               basePath,
+		ctrlCapCreateAndDelete: ctrlCapCreateAndDelete,
 	}
 }
 
 func (r *Driver) NewServers() {
 
-	r.csiDriver.AddControllerServiceCapabilities([]csi.ControllerServiceCapability_RPC_Type{
-		csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME,
-	})
+	var ctrlCap []csi.ControllerServiceCapability_RPC_Type
+	if r.ctrlCapCreateAndDelete {
+		ctrlCap = append(ctrlCap, csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME)
+	}
+
+	r.csiDriver.AddControllerServiceCapabilities(ctrlCap)
 
 	r.csiDriver.AddNodeServiceCapabilities([]csi.NodeServiceCapability_RPC_Type{})
 
@@ -52,6 +58,7 @@ func (r *Driver) NewServers() {
 		DefaultNodeServer: csicommon.NewDefaultNodeServer(r.csiDriver, map[string]string{topologyKeyNode: r.nodeid}),
 		driverName:        r.name,
 		basePath:          r.basePath,
+		rootfsLock:        lock.NewVolumeLocks(),
 	}
 
 }

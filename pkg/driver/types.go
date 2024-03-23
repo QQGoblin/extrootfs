@@ -1,17 +1,18 @@
 package driver
 
 import (
-	"encoding/json"
 	"github.com/QQGoblin/extrootfs/pkg/util/qemu"
+	"github.com/pkg/errors"
 	"os"
 	"path"
-	"path/filepath"
 )
 
 const (
 	RootFSTypeKey     = "extrootfs.io/type"
 	RootFSImageKey    = "extrootfs.io/image"
 	DefaultRootFSFile = "rootfs"
+	DefaultImagesDir  = "images"
+	DefualtTypeFile   = "rootfs_type"
 )
 
 type RootFSType string
@@ -25,9 +26,8 @@ type RootFS interface {
 	Connect() error
 	Disconnect() error
 	Cleanup() error
+	WriteConfig() error
 }
-
-var _ RootFS = &QEMURootFS{}
 
 type QEMURootFS struct {
 	ID             string        `json:"id"`
@@ -38,70 +38,44 @@ type QEMURootFS struct {
 	ImagePath      string        `json:"image_path"`
 	RootFSPath     string        `json:"rootfs_path"`
 	BaseInfo       *qemu.ImgInfo `json:"base_info"`
+	NBD            *qemu.NBD     `json:"nbd_info"`
 }
 
-func NewRootFS(rootfsID, rootfsType, image, dataPath string) RootFS {
-	return &QEMURootFS{
+func NewRootFS(rootfsID, rootfsType, image, basePath string) (RootFS, error) {
+
+	rootfs := &QEMURootFS{
 		ID:         rootfsID,
 		Image:      image,
-		DataPath:   path.Join(dataPath, rootfsType, image),
-		ImagePath:  path.Join(dataPath, rootfsType, "image", image),
-		RootFSPath: path.Join(dataPath, rootfsType, image, DefaultRootFSFile),
+		DataPath:   path.Join(basePath, rootfsID),
+		ImagePath:  path.Join(basePath, rootfsType, DefaultImagesDir, image),
+		RootFSPath: path.Join(basePath, rootfsID, DefaultRootFSFile),
 	}
+
+	if err := os.MkdirAll(rootfs.DataPath, 0755); err != nil {
+		return nil, errors.Wrap(err, "new rootfs")
+	}
+
+	if err := os.WriteFile(path.Join(rootfs.DataPath, DefualtTypeFile), []byte(rootfsType), 0600); err != nil {
+		return nil, errors.Wrap(err, "new rootfs")
+	}
+
+	return rootfs, nil
 }
 
-func (q *QEMURootFS) Allocate() error {
+func LoadRootFS(rootfsID, basePath string) (RootFS, error) {
 
-	var err error
-	if q.BaseInfo, err = qemu.ImageInfo(q.Image); err != nil {
-		return err
-	}
+	dataPath := path.Join(basePath, rootfsID)
 
-	if err := os.MkdirAll(q.DataPath, 0755); err != nil {
-		return err
-	}
-
-	if _, err = os.Stat(q.RootFSPath); os.IsNotExist(err) {
-		if _, err := qemu.CreateImageFromBase(q.RootFSPath, q.ImagePath); err != nil {
-			return err
-		}
-	}
-
-	return err
-}
-
-func (q *QEMURootFS) Connect() error {
-
-	nbd := qemu.NBD{}
-
-	// TODO: lock!!
-	qemu.NBDConnectLock.Lock()
-	defer qemu.NBDConnectLock.Unlock()
-
-	if err := nbd.Connect(q.RootFSPath, q.BaseInfo.Format); err != nil {
-		return err
-	}
-	q.Device = nbd.DevicePath
-
-	b, err := json.Marshal(nbd.DevicePath)
+	b, err := os.ReadFile(path.Join(dataPath, DefualtTypeFile))
 	if err != nil {
-		nbd.Disconnect()
-		return err
-	}
-	if err = os.WriteFile(filepath.Join(q.RootFSPath, "qemu-config.json"), b, 0600); err != nil {
-		nbd.Disconnect()
+		return nil, errors.Wrap(err, "load rootfs")
 	}
 
-	return nil
+	switch string(b) {
+	case RootfsTypeQCOW2:
+		return LoadQEMURootFS(dataPath)
+	}
 
-}
+	return nil, errors.New("unknow rootfs type")
 
-func (q *QEMURootFS) Disconnect() error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (q *QEMURootFS) Cleanup() error {
-	//TODO implement me
-	panic("implement me")
 }

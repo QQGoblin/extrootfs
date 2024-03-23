@@ -7,3 +7,4 @@ image:
 
 provisioner: "driver.extrootfs.io"
 data: /opt/extrootfs/
+skipCreateAndDelete: false

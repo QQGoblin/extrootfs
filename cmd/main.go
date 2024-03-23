@@ -7,10 +7,11 @@ import (
 )
 
 var (
-	nodeid     string
-	drivername string
-	endpoint   string
-	basePath   string
+	nodeid              string
+	drivername          string
+	endpoint            string
+	basePath            string
+	skipCreateAndDelete bool
 )
 
 func init() {
@@ -19,6 +20,7 @@ func init() {
 	flag.StringVar(&drivername, "drivername", driver.DefaultDriverName, "external rootfs driver name.")
 	flag.StringVar(&endpoint, "endpoint", "unix://run/extrootfs.sock", "default endpoint.")
 	flag.StringVar(&basePath, "base", "/opt/extrootfs", "default endpoint.")
+	flag.BoolVar(&skipCreateAndDelete, "skip-create-and-delete", false, "skip create and delete rootfs")
 	klog.InitFlags(nil)
 
 	if err := flag.Set("logtostderr", "true"); err != nil {
@@ -30,6 +32,6 @@ func init() {
 
 func main() {
 
-	driver := driver.NewDriver(drivername, nodeid, endpoint, basePath)
+	driver := driver.NewDriver(drivername, nodeid, endpoint, basePath, !skipCreateAndDelete)
 	driver.Run()
 }

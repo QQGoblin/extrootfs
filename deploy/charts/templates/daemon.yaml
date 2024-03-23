@@ -30,6 +30,9 @@ spec:
             - "--endpoint=unix://extrootfs/extrootfs.sock"
             - "--drivername={{ .Values.provisioner }}"
             - "--base={{ .Values.data }}"
+            {{ if .Values.skipCreateAndDelete }}
+            - "--skip-create-and-delete"
+            {{ end }}
           env:
             - name: NODE_ID
               valueFrom:

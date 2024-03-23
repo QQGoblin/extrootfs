@@ -10,7 +10,7 @@ metadata:
   name: {{ .Release.Name }}-driver
 subjects:
   - kind: ServiceAccount
-    name: {{ .Release.Namespace }}
+    name: {{ .Release.Name }}-driver
     namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
