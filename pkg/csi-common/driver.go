@@ -1,7 +1,7 @@
 package csicommon
 
 import (
-	"github.com/QQGoblin/extrootfs/pkg/util/log"
+	"github.com/QQGoblin/extrootfs/pkg/utils/log"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"google.golang.org/grpc/codes"

@@ -2,7 +2,7 @@ package qemu
 
 import (
 	"fmt"
-	"github.com/QQGoblin/extrootfs/pkg/util/log"
+	"github.com/QQGoblin/extrootfs/pkg/utils/log"
 	"os"
 	"os/exec"
 	"path"

@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/container-storage-interface/spec v1.9.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
+	github.com/kubernetes-csi/csi-lib-iscsi v0.0.0-20240130114156-dd26709d0dcc
 	github.com/kubernetes-csi/csi-lib-utils v0.14.0
 	github.com/pkg/errors v0.9.1
 	google.golang.org/grpc v1.59.0

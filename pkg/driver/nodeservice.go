@@ -3,8 +3,8 @@ package driver
 import (
 	"context"
 	csicommon "github.com/QQGoblin/extrootfs/pkg/csi-common"
-	"github.com/QQGoblin/extrootfs/pkg/util/lock"
-	"github.com/QQGoblin/extrootfs/pkg/util/log"
+	"github.com/QQGoblin/extrootfs/pkg/utils/lock"
+	"github.com/QQGoblin/extrootfs/pkg/utils/log"
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

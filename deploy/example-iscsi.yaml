@@ -1,0 +1,82 @@
+# 通过手工绑定 pv 和 pvc
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: manual-bind
+provisioner: driver.extrootfs.io
+volumeBindingMode: Immediate
+parameters: {}
+reclaimPolicy: Delete
+allowVolumeExpansion: false
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  finalizers:
+    - kubernetes.io/pv-protection
+  name: pvc-72feb899-658f-41ad-840e-a4c3f07bc859
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 20Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: e84c8476-d159-4dd8-97fd-18967d88c010
+    namespace: default
+  csi:
+    driver: driver.extrootfs.io
+    fsType: xfs
+    volumeAttributes:
+      csi.storage.k8s.io/pv/name: pvc-72feb899-658f-41ad-840e-a4c3f07bc859
+      csi.storage.k8s.io/pvc/name: e84c8476-d159-4dd8-97fd-18967d88c010
+      csi.storage.k8s.io/pvc/namespace: default
+      extrootfs.io/type: iscsi
+      extrootfs.io/iscsi/target: iqn.2024-04.cn.lqingcloud:iscsi-disk-0
+      extrootfs.io/iscsi/portal: 172.28.112.118:3260
+      extrootfs.io/iscsi/user: admin
+      extrootfs.io/iscsi/password: admin
+    volumeHandle: pvc-72feb899-658f-41ad-840e-a4c3f07bc859
+  persistentVolumeReclaimPolicy: Delete
+  volumeMode: Filesystem
+  storageClassName: manual-bind
+status:
+  phase: Bound
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: e84c8476-d159-4dd8-97fd-18967d88c010              # PVC 和 PV 信息关联到具体的 rootfs
+spec:
+  storageClassName: manual-bind
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: centos
+spec:
+  containers:
+    - command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
+      image: registry.lqingcloud.cn/library/centos:7.4.1708
+      imagePullPolicy: IfNotPresent
+      name: centos
+      env:
+        - name: EXTERNAL_ROOTFS_DRIVER
+          value: device
+        - name: EXTERNAL_ROOTFS_DEVICE_CONFIG
+          value: "/opt/extrootfs/output/e84c8476-d159-4dd8-97fd-18967d88c010"
+      volumeMounts:                                                                # 注入上述 PVC，用于触发容器启动前设备的挂载
+        - name: extrootfs
+          mountPath: /tmp/extrootfs
+  volumes:
+    - name: extrootfs
+      persistentVolumeClaim:
+        claimName: e84c8476-d159-4dd8-97fd-18967d88c010
+        readOnly: true

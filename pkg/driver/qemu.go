@@ -2,8 +2,8 @@ package driver
 
 import (
 	"encoding/json"
-	"github.com/QQGoblin/extrootfs/pkg/util/log"
-	"github.com/QQGoblin/extrootfs/pkg/util/qemu"
+	"github.com/QQGoblin/extrootfs/pkg/utils/log"
+	"github.com/QQGoblin/extrootfs/pkg/utils/qemu"
 	"github.com/pkg/errors"
 	"os"
 	"path"

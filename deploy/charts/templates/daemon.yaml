@@ -64,6 +64,16 @@ spec:
               mountPath: /dev
             - name: host-sys
               mountPath: /sys
+            - mountPath: /run/mount
+              name: host-mount
+            - mountPath: /lib/modules
+              name: lib-modules
+              readOnly: true
+            - mountPath: /etc/iscsi
+              name: iscsi-etc
+            - mountPath: /usr/sbin/iscsiadm
+              name: iscsiadm
+              readOnly: true
         - name: csi-provisioner
           image: {{ .Values.image.provisioner }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
@@ -140,3 +150,19 @@ spec:
         - name: host-sys
           hostPath:
             path: /sys
+        - name: host-mount
+          hostPath:
+            path: /run/mount
+            type: Directory
+        - name: lib-modules
+          hostPath:
+            path: /lib/modules
+            type: Directory
+        - name: iscsiadm
+          hostPath:
+            path: /sbin/iscsiadm
+            type: File
+        - name: iscsi-etc
+          hostPath:
+            path: /etc/iscsi
+            type: Directory

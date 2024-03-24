@@ -15,7 +15,7 @@ package lock
 
 import (
 	"fmt"
-	"github.com/QQGoblin/extrootfs/pkg/util/log"
+	"github.com/QQGoblin/extrootfs/pkg/utils/log"
 	"sync"
 
 	"k8s.io/apimachinery/pkg/util/sets"
