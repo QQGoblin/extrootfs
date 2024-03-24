@@ -1,0 +1,9 @@
+FROM openeuler/openeuler:22.03
+
+RUN sed -i "s/gpgcheck=1/gpgcheck=0/g" /etc/yum.conf && \
+    sed -i "s/gpgcheck=1/gpgcheck=0/g" /etc/yum.repos.d/openEuler.repo && \
+    yum -y install qemu-img open-isns kmod-libs open-iscsi && \
+    yum clean all
+
+ADD /bin/extrootfs /usr/bin/
+ENTRYPOINT ["/usr/bin/extrootfs"]
