@@ -31,7 +31,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	}
 	defer ns.rootfsLock.Release(rootfsID)
 
-	rootfs, err := NewRootFS(rootfsID, req.VolumeContext[RootFSTypeKey], req.VolumeContext[RootFSImageKey], ns.basePath)
+	rootfs, err := NewRootFS(rootfsID, req.VolumeContext[RootFSTypeKey], ns.basePath, req.VolumeContext)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "New RootFS %s failed: %v", rootfsID, err)
 	}
@@ -122,10 +122,10 @@ func (ns *NodeServer) validateNodeUnpublishVolumeRequest(request *csi.NodeUnpubl
 
 func (ns *NodeServer) validateFromVolContext(volContext map[string]string) error {
 
-	rootfsImage := volContext[RootFSImageKey]
-	if rootfsImage == "" {
-		return status.Errorf(codes.InvalidArgument, "rootfs image is empty")
-	}
+	//rootfsImage := volContext[RootFSImageKey]
+	//if rootfsImage == "" {
+	//	return status.Errorf(codes.InvalidArgument, "rootfs image is empty")
+	//}
 
 	rootfsType := volContext[RootFSTypeKey]
 	if rootfsType != RootfsTypeQCOW2 {

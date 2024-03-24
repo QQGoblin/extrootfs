@@ -1,7 +1,6 @@
 package driver
 
 import (
-	"github.com/QQGoblin/extrootfs/pkg/util/qemu"
 	"github.com/pkg/errors"
 	"os"
 	"path"
@@ -19,6 +18,7 @@ type RootFSType string
 
 const (
 	RootfsTypeQCOW2 = "qcow2"
+	RootfsTypeISCSI = "iscsi"
 )
 
 type RootFS interface {
@@ -29,37 +29,16 @@ type RootFS interface {
 	WriteConfig() error
 }
 
-type QEMURootFS struct {
-	ID             string        `json:"id"`
-	Image          string        `json:"image"`
-	Device         string        `json:"device"`
-	FileSystemType string        `json:"file_system_type"`
-	DataPath       string        `json:"data_path"`
-	ImagePath      string        `json:"image_path"`
-	RootFSPath     string        `json:"rootfs_path"`
-	BaseInfo       *qemu.ImgInfo `json:"base_info"`
-	NBD            *qemu.NBD     `json:"nbd_info"`
-}
+func NewRootFS(rootfsID, rootfsType, basePath string, config map[string]string) (RootFS, error) {
 
-func NewRootFS(rootfsID, rootfsType, image, basePath string) (RootFS, error) {
-
-	rootfs := &QEMURootFS{
-		ID:         rootfsID,
-		Image:      image,
-		DataPath:   path.Join(basePath, rootfsID),
-		ImagePath:  path.Join(basePath, rootfsType, DefaultImagesDir, image),
-		RootFSPath: path.Join(basePath, rootfsID, DefaultRootFSFile),
+	switch rootfsType {
+	case RootfsTypeQCOW2:
+		return NewQEMURootFS(rootfsID, basePath, config)
+	case RootfsTypeISCSI:
+		return NewISCSIRootFS(rootfsID, basePath, config)
 	}
 
-	if err := os.MkdirAll(rootfs.DataPath, 0755); err != nil {
-		return nil, errors.Wrap(err, "new rootfs")
-	}
-
-	if err := os.WriteFile(path.Join(rootfs.DataPath, DefualtTypeFile), []byte(rootfsType), 0600); err != nil {
-		return nil, errors.Wrap(err, "new rootfs")
-	}
-
-	return rootfs, nil
+	return nil, errors.New("extrootfs type not support")
 }
 
 func LoadRootFS(rootfsID, basePath string) (RootFS, error) {

@@ -4,16 +4,51 @@ import (
 	"encoding/json"
 	"github.com/QQGoblin/extrootfs/pkg/util/log"
 	"github.com/QQGoblin/extrootfs/pkg/util/qemu"
+	"github.com/pkg/errors"
 	"os"
 	"path"
 	"path/filepath"
 )
+
+type QEMURootFS struct {
+	ID             string        `json:"id"`
+	Image          string        `json:"image"`
+	Device         string        `json:"device"`
+	FileSystemType string        `json:"file_system_type"`
+	DataPath       string        `json:"data_path"`
+	ImagePath      string        `json:"image_path"`
+	RootFSPath     string        `json:"rootfs_path"`
+	BaseInfo       *qemu.ImgInfo `json:"base_info"`
+	NBD            *qemu.NBD     `json:"nbd_info"`
+}
 
 var _ RootFS = &QEMURootFS{}
 
 const (
 	qemuConfig = "qemu-config.json"
 )
+
+func NewQEMURootFS(rootfsID, basePath string, config map[string]string) (RootFS, error) {
+
+	image := config[RootFSImageKey]
+	rootfs := &QEMURootFS{
+		ID:         rootfsID,
+		Image:      image,
+		DataPath:   path.Join(basePath, rootfsID),
+		ImagePath:  path.Join(basePath, RootfsTypeQCOW2, DefaultImagesDir, image),
+		RootFSPath: path.Join(basePath, rootfsID, DefaultRootFSFile),
+	}
+
+	if err := os.MkdirAll(rootfs.DataPath, 0755); err != nil {
+		return nil, errors.Wrap(err, "new rootfs")
+	}
+
+	if err := os.WriteFile(path.Join(rootfs.DataPath, DefualtTypeFile), []byte(RootfsTypeQCOW2), 0600); err != nil {
+		return nil, errors.Wrap(err, "new rootfs")
+	}
+
+	return rootfs, nil
+}
 
 func (q *QEMURootFS) Allocate() error {
 
