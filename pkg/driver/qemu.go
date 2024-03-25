@@ -25,12 +25,13 @@ type QEMURootFS struct {
 var _ RootFS = &QEMURootFS{}
 
 const (
-	qemuConfig = "qemu-config.json"
+	qemuConfig   = "qemu-config.json"
+	qemuImageKey = "extrootfs.io/qemu/image"
 )
 
 func NewQEMURootFS(rootfsID, basePath string, config map[string]string) (RootFS, error) {
 
-	image := config[RootFSQemuImageKey]
+	image := config[qemuImageKey]
 	rootfs := &QEMURootFS{
 		ID:         rootfsID,
 		Image:      image,

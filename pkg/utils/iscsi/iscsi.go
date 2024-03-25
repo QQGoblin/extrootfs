@@ -14,19 +14,17 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/container-storage-interface/spec/lib/go/csi"
 	iscsilib "github.com/kubernetes-csi/csi-lib-iscsi/iscsi"
 	"github.com/pkg/errors"
 )
 
 type Disk struct {
-	Portals          []string
-	IQN              string
-	Lun              int32
-	SessionSecret    iscsilib.Secrets
-	DiscoverySecret  iscsilib.Secrets
-	VolumeCapability *csi.VolumeCapability
-	DevicePath       string
+	Portals         []string
+	IQN             string
+	Lun             int32
+	SessionSecret   iscsilib.Secrets
+	DiscoverySecret iscsilib.Secrets
+	DevicePath      string
 }
 
 type Session struct {

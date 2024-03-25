@@ -7,11 +7,11 @@ import (
 )
 
 const (
-	RootFSTypeKey      = "extrootfs.io/type"
-	RootFSQemuImageKey = "extrootfs.io/qemu/image"
-	DefaultRootFSFile  = "rootfs"
-	DefaultImagesDir   = "images"
-	DefualtTypeFile    = "rootfs_type"
+	RootFSTypeKey = "extrootfs.io/type"
+
+	DefaultRootFSFile = "rootfs"
+	DefaultImagesDir  = "images"
+	DefualtTypeFile   = "rootfs_type"
 )
 
 type RootFSType string
@@ -53,6 +53,8 @@ func LoadRootFS(rootfsID, basePath string) (RootFS, error) {
 	switch string(b) {
 	case RootfsTypeQemu:
 		return LoadQEMURootFS(dataPath)
+	case RootfsTypeISCSI:
+		return LoadISCSIRootFS(dataPath)
 	}
 
 	return nil, errors.New("unknow rootfs type")
