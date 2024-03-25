@@ -5,6 +5,7 @@ import (
 	"github.com/QQGoblin/extrootfs/pkg/utils/lock"
 	"github.com/QQGoblin/extrootfs/pkg/utils/log"
 	"github.com/container-storage-interface/spec/lib/go/csi"
+	"os"
 )
 
 const (
@@ -54,6 +55,10 @@ func (r *Driver) NewServers() {
 	r.servers.CS = &ControllerServer{
 		DefaultControllerServer: csicommon.NewDefaultControllerServer(r.csiDriver),
 		driverName:              r.name,
+	}
+
+	if err := os.MkdirAll(r.outputBase, 0755); err != nil {
+		log.FatalLogMsg("Failed to initialize output.")
 	}
 
 	r.servers.NS = &NodeServer{

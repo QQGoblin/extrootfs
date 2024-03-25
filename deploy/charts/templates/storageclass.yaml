@@ -1,0 +1,12 @@
+---
+{{ if .Values.skipCreateAndDelete }}
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: manual-bind
+provisioner:  {{ .Values.provisioner }}
+volumeBindingMode: Immediate
+parameters: {}
+reclaimPolicy: Delete
+allowVolumeExpansion: false
+{{ end }}

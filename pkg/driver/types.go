@@ -100,10 +100,6 @@ type RootFSOutput struct {
 
 func (rs *BaseRootFS) WriteOutput() error {
 
-	if err := os.MkdirAll(path.Base(rs.Output), 0755); err != nil {
-		return err
-	}
-
 	o := RootFSOutput{
 		Device:         rs.Device,
 		FilesystemType: rs.FileSystemType,
