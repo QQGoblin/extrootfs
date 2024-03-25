@@ -23,7 +23,7 @@ const (
 )
 
 type ISCSIRootFS struct {
-	*BaseRootFS
+	BaseRootFS
 	Target    string      `json:"target"`
 	Portals   []string    `json:"portals"`
 	Lun       int         `json:"lun"`
@@ -46,7 +46,7 @@ func NewISCSIRootFS(rootfsID, basePath, outputBase string, config map[string]str
 		return nil, errors.Wrap(err, "error lun")
 	}
 	rootfs := &ISCSIRootFS{
-		BaseRootFS: base,
+		BaseRootFS: *base,
 		Target:     config[iscsiTargetKey],
 		Portals:    []string{config[iscsiPortalKey]},
 		Lun:        lun,

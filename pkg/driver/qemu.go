@@ -11,7 +11,7 @@ import (
 )
 
 type QEMURootFS struct {
-	*BaseRootFS
+	BaseRootFS
 	ImagePath  string        `json:"image_path"`
 	RootFSPath string        `json:"rootfs_path"`
 	BaseInfo   *qemu.ImgInfo `json:"base_info"`
@@ -34,7 +34,7 @@ func NewQEMURootFS(rootfsID, basePath, outputBase string, config map[string]stri
 
 	image := config[qemuImageKey]
 	rootfs := &QEMURootFS{
-		BaseRootFS: base,
+		BaseRootFS: *base,
 		ImagePath:  path.Join(basePath, RootfsTypeQemu, DefaultImagesDir, image),
 		RootFSPath: path.Join(basePath, rootfsID, DefaultRootFSFile),
 	}
