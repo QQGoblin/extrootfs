@@ -35,6 +35,7 @@ spec:
       extrootfs.io/type: iscsi
       extrootfs.io/iscsi/target: iqn.2024-04.cn.lqingcloud:iscsi-disk-0
       extrootfs.io/iscsi/portal: 172.28.112.118:3260
+      extrootfs.io/iscsi/lun: "1"
       extrootfs.io/iscsi/user: admin
       extrootfs.io/iscsi/password: admin
     volumeHandle: pvc-72feb899-658f-41ad-840e-a4c3f07bc859

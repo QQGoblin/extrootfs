@@ -128,9 +128,11 @@ func (ns *NodeServer) validateFromVolContext(volContext map[string]string) error
 	//}
 
 	rootfsType := volContext[RootFSTypeKey]
-	if rootfsType != RootfsTypeQemu {
+
+	switch rootfsType {
+	case RootfsTypeISCSI, RootfsTypeQemu:
+		return nil
+	default:
 		return status.Errorf(codes.InvalidArgument, "error rootfs type %s", rootfsType)
 	}
-
-	return nil
 }

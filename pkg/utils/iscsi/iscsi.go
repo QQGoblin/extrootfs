@@ -38,7 +38,7 @@ type Session struct {
 	InternalIscsidSessionState string
 }
 
-func New(userName, password string, iqn string, portals []string) *Disk {
+func New(userName, password string, iqn string, portals []string, lun int32) *Disk {
 
 	secrets := iscsilib.Secrets{
 		SecretsType: "chap",
@@ -49,7 +49,7 @@ func New(userName, password string, iqn string, portals []string) *Disk {
 	return &Disk{
 		Portals:       portals,
 		IQN:           iqn,
-		Lun:           0, // 这里 lun id 固定为0
+		Lun:           lun, // 这里 lun id 固定为0
 		SessionSecret: secrets,
 		//DiscoverySecret: secrets, // 关闭 DiscoverySecret ，当前 iscsi-initiator-utils 和 iscci-lib 似乎有兼容性问题
 	}
@@ -60,6 +60,7 @@ func (d *Disk) AttachDisk() error {
 		TargetIqn:      d.IQN,
 		TargetPortals:  d.Portals,
 		SessionSecrets: d.SessionSecret,
+		Lun:            d.Lun,
 		//DiscoverySecrets: d.DiscoverySecret,
 		DoDiscovery:     false,
 		DoCHAPDiscovery: true,
@@ -225,8 +226,9 @@ func PreemptLUN(devPath string) error {
 		return fmt.Errorf("read iscsi device PR keys err:%v", err)
 	}
 	if !strings.Contains(string(keyInfo), hostISCSIKey) {
-		// 没有 Key 需要先注册
-		_, err := sgPersistCmd("--out", "--register", "--param-sark="+hostISCSIKey, devPath, "--param-aptpl")
+		// tgtd 作为 iscsi 服务端时不支持 --param-aptpl 参数
+		//_, err = sgPersistCmd("--out", "--register", "--param-sark="+hostISCSIKey, devPath, "--param-aptpl")
+		_, err = sgPersistCmd("--out", "--register", "--param-sark="+hostISCSIKey, devPath)
 		if err != nil {
 			return fmt.Errorf("register PR key err:%v", err)
 		}

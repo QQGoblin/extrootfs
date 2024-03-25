@@ -10,11 +10,13 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 )
 
 const (
 	iscsiTargetKey   = "extrootfs.io/iscsi/target"
 	iscsiPortalKey   = "extrootfs.io/iscsi/portal"
+	iscsiLunKey      = "extrootfs.io/iscsi/lun"
 	iscsiUserKey     = "extrootfs.io/iscsi/user"
 	iscsiPasswordKey = "extrootfs.io/iscsi/password"
 	iscsiConfig      = "iscsi-config.json"
@@ -28,6 +30,7 @@ type ISCSIRootFS struct {
 	DataPath       string      `json:"data_path"`
 	Target         string      `json:"target"`
 	Portals        []string    `json:"portals"`
+	Lun            int         `json:"lun"`
 	Username       string      `json:"username"`
 	Password       string      `json:"password"`
 	ISCSIDisk      *iscsi.Disk `json:"iscsi_disk"`
@@ -37,11 +40,16 @@ var _ RootFS = &ISCSIRootFS{}
 
 func NewISCSIRootFS(rootfsID, basePath string, config map[string]string) (RootFS, error) {
 
+	lun, err := strconv.Atoi(config[iscsiLunKey])
+	if err != nil {
+		return nil, errors.Wrap(err, "error lun")
+	}
 	rootfs := &ISCSIRootFS{
 		ID:       rootfsID,
 		DataPath: path.Join(basePath, rootfsID),
 		Target:   config[iscsiTargetKey],
 		Portals:  []string{config[iscsiPortalKey]},
+		Lun:      lun,
 		Username: config[iscsiUserKey],
 		Password: config[iscsiPasswordKey],
 	}
@@ -63,7 +71,7 @@ func (irs *ISCSIRootFS) Allocate() error {
 
 func (irs *ISCSIRootFS) Connect() error {
 
-	iscsiDisk := iscsi.New(irs.Username, irs.Password, irs.Target, irs.Portals)
+	iscsiDisk := iscsi.New(irs.Username, irs.Password, irs.Target, irs.Portals, int32(irs.Lun))
 
 	if err := iscsiDisk.ReopenDisk(); err != nil {
 		return errors.Wrap(err, "reopen disk")
@@ -72,6 +80,7 @@ func (irs *ISCSIRootFS) Connect() error {
 	if err := iscsiDisk.SetKernalConfig(); err != nil {
 		return errors.Wrap(err, "config device")
 	}
+
 	// 设置 preempt key，进行抢占式挂载
 	if err := iscsi.PreemptLUN(iscsiDisk.DevicePath); err != nil {
 		// TODO: disconnect POS target
