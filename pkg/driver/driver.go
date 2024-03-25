@@ -20,11 +20,12 @@ type Driver struct {
 	nodeid                 string
 	endpoint               string
 	basePath               string
+	outputBase             string
 	ctrlCapCreateAndDelete bool
 }
 
 // NewDriver returns new ceph driver.
-func NewDriver(name, nodeid, endpoint, basePath string, ctrlCapCreateAndDelete bool) *Driver {
+func NewDriver(name, nodeid, endpoint, basePath, outputBase string, ctrlCapCreateAndDelete bool) *Driver {
 	return &Driver{
 		csiDriver:              csicommon.NewCSIDriver(name, nodeid, endpoint),
 		servers:                &csicommon.Servers{},
@@ -32,6 +33,7 @@ func NewDriver(name, nodeid, endpoint, basePath string, ctrlCapCreateAndDelete b
 		nodeid:                 nodeid,
 		endpoint:               endpoint,
 		basePath:               basePath,
+		outputBase:             outputBase,
 		ctrlCapCreateAndDelete: ctrlCapCreateAndDelete,
 	}
 }
@@ -58,6 +60,7 @@ func (r *Driver) NewServers() {
 		DefaultNodeServer: csicommon.NewDefaultNodeServer(r.csiDriver, map[string]string{topologyKeyNode: r.nodeid}),
 		driverName:        r.name,
 		basePath:          r.basePath,
+		outputBase:        r.outputBase,
 		rootfsLock:        lock.NewVolumeLocks(),
 	}
 

@@ -11,15 +11,11 @@ import (
 )
 
 type QEMURootFS struct {
-	ID             string        `json:"id"`
-	Image          string        `json:"image"`
-	Device         string        `json:"device"`
-	FileSystemType string        `json:"file_system_type"`
-	DataPath       string        `json:"data_path"`
-	ImagePath      string        `json:"image_path"`
-	RootFSPath     string        `json:"rootfs_path"`
-	BaseInfo       *qemu.ImgInfo `json:"base_info"`
-	NBD            *qemu.NBD     `json:"nbd_info"`
+	*BaseRootFS
+	ImagePath  string        `json:"image_path"`
+	RootFSPath string        `json:"rootfs_path"`
+	BaseInfo   *qemu.ImgInfo `json:"base_info"`
+	NBD        *qemu.NBD     `json:"nbd_info"`
 }
 
 var _ RootFS = &QEMURootFS{}
@@ -29,23 +25,18 @@ const (
 	qemuImageKey = "extrootfs.io/qemu/image"
 )
 
-func NewQEMURootFS(rootfsID, basePath string, config map[string]string) (RootFS, error) {
+func NewQEMURootFS(rootfsID, basePath, outputBase string, config map[string]string) (RootFS, error) {
+
+	base, err := NewBaseRootFS(rootfsID, basePath, outputBase, config)
+	if err != nil {
+		return nil, errors.Wrap(err, "create base")
+	}
 
 	image := config[qemuImageKey]
 	rootfs := &QEMURootFS{
-		ID:         rootfsID,
-		Image:      image,
-		DataPath:   path.Join(basePath, rootfsID),
+		BaseRootFS: base,
 		ImagePath:  path.Join(basePath, RootfsTypeQemu, DefaultImagesDir, image),
 		RootFSPath: path.Join(basePath, rootfsID, DefaultRootFSFile),
-	}
-
-	if err := os.MkdirAll(rootfs.DataPath, 0755); err != nil {
-		return nil, errors.Wrap(err, "new rootfs")
-	}
-
-	if err := os.WriteFile(path.Join(rootfs.DataPath, DefualtTypeFile), []byte(RootfsTypeQemu), 0600); err != nil {
-		return nil, errors.Wrap(err, "new rootfs")
 	}
 
 	return rootfs, nil
@@ -86,7 +77,12 @@ func (q *QEMURootFS) WriteConfig() error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(q.DataPath, qemuConfig), b, 0600)
+	if err = os.WriteFile(filepath.Join(q.DataPath, qemuConfig), b, 0600); err != nil {
+		return err
+	}
+
+	return q.BaseRootFS.WriteOutput()
+
 }
 
 func (q *QEMURootFS) Disconnect() error {

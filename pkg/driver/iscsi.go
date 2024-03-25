@@ -23,43 +23,35 @@ const (
 )
 
 type ISCSIRootFS struct {
-	ID             string      `json:"id"`
-	Image          string      `json:"image"`
-	Device         string      `json:"device"`
-	FileSystemType string      `json:"file_system_type"`
-	DataPath       string      `json:"data_path"`
-	Target         string      `json:"target"`
-	Portals        []string    `json:"portals"`
-	Lun            int         `json:"lun"`
-	Username       string      `json:"username"`
-	Password       string      `json:"password"`
-	ISCSIDisk      *iscsi.Disk `json:"iscsi_disk"`
+	*BaseRootFS
+	Target    string      `json:"target"`
+	Portals   []string    `json:"portals"`
+	Lun       int         `json:"lun"`
+	Username  string      `json:"username"`
+	Password  string      `json:"password"`
+	ISCSIDisk *iscsi.Disk `json:"iscsi_disk"`
 }
 
 var _ RootFS = &ISCSIRootFS{}
 
-func NewISCSIRootFS(rootfsID, basePath string, config map[string]string) (RootFS, error) {
+func NewISCSIRootFS(rootfsID, basePath, outputBase string, config map[string]string) (RootFS, error) {
+
+	base, err := NewBaseRootFS(rootfsID, basePath, outputBase, config)
+	if err != nil {
+		return nil, errors.Wrap(err, "create base")
+	}
 
 	lun, err := strconv.Atoi(config[iscsiLunKey])
 	if err != nil {
 		return nil, errors.Wrap(err, "error lun")
 	}
 	rootfs := &ISCSIRootFS{
-		ID:       rootfsID,
-		DataPath: path.Join(basePath, rootfsID),
-		Target:   config[iscsiTargetKey],
-		Portals:  []string{config[iscsiPortalKey]},
-		Lun:      lun,
-		Username: config[iscsiUserKey],
-		Password: config[iscsiPasswordKey],
-	}
-
-	if err := os.MkdirAll(rootfs.DataPath, 0755); err != nil {
-		return nil, errors.Wrap(err, "new rootfs")
-	}
-
-	if err := os.WriteFile(path.Join(rootfs.DataPath, DefualtTypeFile), []byte(RootfsTypeISCSI), 0600); err != nil {
-		return nil, errors.Wrap(err, "new rootfs")
+		BaseRootFS: base,
+		Target:     config[iscsiTargetKey],
+		Portals:    []string{config[iscsiPortalKey]},
+		Lun:        lun,
+		Username:   config[iscsiUserKey],
+		Password:   config[iscsiPasswordKey],
 	}
 
 	return rootfs, nil
@@ -117,7 +109,12 @@ func (irs *ISCSIRootFS) WriteConfig() error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(irs.DataPath, iscsiConfig), b, 0600)
+	if err = os.WriteFile(filepath.Join(irs.DataPath, iscsiConfig), b, 0600); err != nil {
+		return err
+	}
+
+	return irs.BaseRootFS.WriteOutput()
+
 }
 
 func LoadISCSIRootFS(dataPath string) (*ISCSIRootFS, error) {

@@ -14,6 +14,7 @@ type NodeServer struct {
 	*csicommon.DefaultNodeServer
 	driverName string
 	basePath   string
+	outputBase string
 	rootfsLock *lock.VolumeLocks
 }
 
@@ -31,7 +32,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	}
 	defer ns.rootfsLock.Release(rootfsID)
 
-	rootfs, err := NewRootFS(rootfsID, req.VolumeContext[RootFSTypeKey], ns.basePath, req.VolumeContext)
+	rootfs, err := NewRootFS(rootfsID, req.VolumeContext[RootFSTypeKey], ns.basePath, ns.outputBase, req.VolumeContext)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "New RootFS %s failed: %v", rootfsID, err)
 	}
