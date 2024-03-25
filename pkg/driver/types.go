@@ -8,7 +8,7 @@ import (
 
 const (
 	RootFSTypeKey      = "extrootfs.io/type"
-	RootFSQemuImageKey = "extrootfs.io/image"
+	RootFSQemuImageKey = "extrootfs.io/qemu/image"
 	DefaultRootFSFile  = "rootfs"
 	DefaultImagesDir   = "images"
 	DefualtTypeFile    = "rootfs_type"
