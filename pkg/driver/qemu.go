@@ -30,12 +30,12 @@ const (
 
 func NewQEMURootFS(rootfsID, basePath string, config map[string]string) (RootFS, error) {
 
-	image := config[RootFSImageKey]
+	image := config[RootFSQemuImageKey]
 	rootfs := &QEMURootFS{
 		ID:         rootfsID,
 		Image:      image,
 		DataPath:   path.Join(basePath, rootfsID),
-		ImagePath:  path.Join(basePath, RootfsTypeQCOW2, DefaultImagesDir, image),
+		ImagePath:  path.Join(basePath, RootfsTypeQemu, DefaultImagesDir, image),
 		RootFSPath: path.Join(basePath, rootfsID, DefaultRootFSFile),
 	}
 
@@ -43,7 +43,7 @@ func NewQEMURootFS(rootfsID, basePath string, config map[string]string) (RootFS,
 		return nil, errors.Wrap(err, "new rootfs")
 	}
 
-	if err := os.WriteFile(path.Join(rootfs.DataPath, DefualtTypeFile), []byte(RootfsTypeQCOW2), 0600); err != nil {
+	if err := os.WriteFile(path.Join(rootfs.DataPath, DefualtTypeFile), []byte(RootfsTypeQemu), 0600); err != nil {
 		return nil, errors.Wrap(err, "new rootfs")
 	}
 

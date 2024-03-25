@@ -3,6 +3,8 @@ name: external-rootfs
 description: external-rootfs driver
 keywords:
   - qcow2
+  - qemu
+  - iscsi
   - rootfs
 maintainers:
   - email: QQGoblin@163.com

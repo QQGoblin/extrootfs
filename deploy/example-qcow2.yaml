@@ -5,9 +5,9 @@ metadata:
   name: 35590e12-c947-4d44-bd13-db7845508e99          # SC，用来表示镜像 ID
 provisioner: driver.extrootfs.io
 volumeBindingMode: Immediate
-parameters:                                           # 具体镜像信息
-  extrootfs.io/type: qcow2
-  extrootfs.io/image: "centos-7.4.1708.qcow2"
+parameters: # 具体镜像信息
+  extrootfs.io/type: qemu
+  extrootfs.io/qemu/image: "centos-7.4.1708.qcow2"
 reclaimPolicy: Delete
 allowVolumeExpansion: false
 ---
@@ -29,20 +29,20 @@ metadata:
   name: centos
 spec:
   containers:
-    - command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
+    - command: [ "/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait" ]
       image: registry.lqingcloud.cn/library/centos:7.4.1708
       imagePullPolicy: IfNotPresent
       name: centos
       env:
-      - name: EXTERNAL_ROOTFS_DRIVER
-        value: device
-      - name: EXTERNAL_ROOTFS_DEVICE_CONFIG
-        value: "/opt/extrootfs/output/9e848619-171d-488f-917e-2a2fa7f6a896"
-      volumeMounts:                                                                # 注入上述 PVC，用于触发容器启动前设备的挂载
-      - name: extrootfs
-        mountPath: /tmp/extrootfs
+        - name: EXTERNAL_ROOTFS_DRIVER
+          value: device
+        - name: EXTERNAL_ROOTFS_DEVICE_CONFIG
+          value: "/opt/extrootfs/output/9e848619-171d-488f-917e-2a2fa7f6a896"
+      volumeMounts: # 注入上述 PVC，用于触发容器启动前设备的挂载
+        - name: extrootfs
+          mountPath: /tmp/extrootfs
   volumes:
-  - name: extrootfs
-    persistentVolumeClaim:
-      claimName: 9e848619-171d-488f-917e-2a2fa7f6a896
-      readOnly: true
+    - name: extrootfs
+      persistentVolumeClaim:
+        claimName: 9e848619-171d-488f-917e-2a2fa7f6a896
+        readOnly: true

@@ -128,7 +128,7 @@ func (ns *NodeServer) validateFromVolContext(volContext map[string]string) error
 	//}
 
 	rootfsType := volContext[RootFSTypeKey]
-	if rootfsType != RootfsTypeQCOW2 {
+	if rootfsType != RootfsTypeQemu {
 		return status.Errorf(codes.InvalidArgument, "error rootfs type %s", rootfsType)
 	}
 

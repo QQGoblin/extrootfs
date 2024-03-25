@@ -6,12 +6,18 @@ import (
 	"path"
 )
 
+const ()
+
 type ISCSIRootFS struct {
-	ID             string `json:"id"`
-	Image          string `json:"image"`
-	Device         string `json:"device"`
-	FileSystemType string `json:"file_system_type"`
-	DataPath       string `json:"data_path"`
+	ID             string   `json:"id"`
+	Image          string   `json:"image"`
+	Device         string   `json:"device"`
+	FileSystemType string   `json:"file_system_type"`
+	DataPath       string   `json:"data_path"`
+	Target         string   `json:"target"`
+	Portals        []string `json:"portals"`
+	Username       string   `json:"username"`
+	Password       string   `json:"password"`
 }
 
 var _ RootFS = &ISCSIRootFS{}

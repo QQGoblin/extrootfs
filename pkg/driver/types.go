@@ -7,17 +7,17 @@ import (
 )
 
 const (
-	RootFSTypeKey     = "extrootfs.io/type"
-	RootFSImageKey    = "extrootfs.io/image"
-	DefaultRootFSFile = "rootfs"
-	DefaultImagesDir  = "images"
-	DefualtTypeFile   = "rootfs_type"
+	RootFSTypeKey      = "extrootfs.io/type"
+	RootFSQemuImageKey = "extrootfs.io/image"
+	DefaultRootFSFile  = "rootfs"
+	DefaultImagesDir   = "images"
+	DefualtTypeFile    = "rootfs_type"
 )
 
 type RootFSType string
 
 const (
-	RootfsTypeQCOW2 = "qcow2"
+	RootfsTypeQemu  = "qemu"
 	RootfsTypeISCSI = "iscsi"
 )
 
@@ -32,7 +32,7 @@ type RootFS interface {
 func NewRootFS(rootfsID, rootfsType, basePath string, config map[string]string) (RootFS, error) {
 
 	switch rootfsType {
-	case RootfsTypeQCOW2:
+	case RootfsTypeQemu:
 		return NewQEMURootFS(rootfsID, basePath, config)
 	case RootfsTypeISCSI:
 		return NewISCSIRootFS(rootfsID, basePath, config)
@@ -51,7 +51,7 @@ func LoadRootFS(rootfsID, basePath string) (RootFS, error) {
 	}
 
 	switch string(b) {
-	case RootfsTypeQCOW2:
+	case RootfsTypeQemu:
 		return LoadQEMURootFS(dataPath)
 	}
 
