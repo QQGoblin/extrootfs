@@ -11,25 +11,28 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 const (
-	iscsiTargetKey   = "extrootfs.io/iscsi/target"
-	iscsiPortalKey   = "extrootfs.io/iscsi/portal"
-	iscsiLunKey      = "extrootfs.io/iscsi/lun"
-	iscsiUserKey     = "extrootfs.io/iscsi/user"
-	iscsiPasswordKey = "extrootfs.io/iscsi/password"
-	iscsiConfig      = "iscsi-config.json"
+	iscsiTargetKey     = "extrootfs.io/iscsi/target"
+	iscsiPortalKey     = "extrootfs.io/iscsi/portal"
+	iscsiLunKey        = "extrootfs.io/iscsi/lun"
+	iscsiUserKey       = "extrootfs.io/iscsi/user"
+	iscsiPasswordKey   = "extrootfs.io/iscsi/password"
+	iscsiPreemptLunKey = "extrootfs.io/iscsi/preempt-lun"
+	iscsiConfig        = "iscsi-config.json"
 )
 
 type ISCSIRootFS struct {
 	BaseRootFS
-	Target    string      `json:"target"`
-	Portals   []string    `json:"portals"`
-	Lun       int         `json:"lun"`
-	Username  string      `json:"username"`
-	Password  string      `json:"password"`
-	ISCSIDisk *iscsi.Disk `json:"iscsi_disk"`
+	Target     string      `json:"target"`
+	Portals    []string    `json:"portals"`
+	Lun        int         `json:"lun"`
+	Username   string      `json:"username"`
+	Password   string      `json:"password"`
+	ISCSIDisk  *iscsi.Disk `json:"iscsi_disk"`
+	PreemptLun bool        `json:"preempt_lun"`
 }
 
 var _ RootFS = &ISCSIRootFS{}
@@ -45,6 +48,7 @@ func NewISCSIRootFS(rootfsID, basePath, outputBase string, config map[string]str
 	if err != nil {
 		return nil, errors.Wrap(err, "error lun")
 	}
+
 	rootfs := &ISCSIRootFS{
 		BaseRootFS: *base,
 		Target:     config[iscsiTargetKey],
@@ -52,6 +56,7 @@ func NewISCSIRootFS(rootfsID, basePath, outputBase string, config map[string]str
 		Lun:        lun,
 		Username:   config[iscsiUserKey],
 		Password:   config[iscsiPasswordKey],
+		PreemptLun: strings.ToLower(config[iscsiPreemptLunKey]) == "true",
 	}
 
 	return rootfs, nil
@@ -74,10 +79,12 @@ func (irs *ISCSIRootFS) Connect() error {
 	}
 
 	// 设置 preempt key，进行抢占式挂载
-	if err := iscsi.PreemptLUN(iscsiDisk.DevicePath); err != nil {
-		// TODO: disconnect POS target
-		_ = iscsiDisk.DetachDisk()
-		return status.Errorf(codes.Internal, "Preempt LUN err:%v", err)
+	if irs.PreemptLun {
+		if err := iscsi.PreemptLUN(iscsiDisk.DevicePath); err != nil {
+			// TODO: disconnect POS target
+			_ = iscsiDisk.DetachDisk()
+			return status.Errorf(codes.Internal, "Preempt LUN err:%v", err)
+		}
 	}
 
 	irs.ISCSIDisk = iscsiDisk

@@ -7,7 +7,7 @@ metadata:
   name: pvc-72feb899-658f-41ad-840e-a4c3f07bc859
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteOncePod
   capacity:
     storage: 20Gi
   claimRef:
@@ -28,6 +28,7 @@ spec:
       extrootfs.io/iscsi/lun: "1"
       extrootfs.io/iscsi/user: admin
       extrootfs.io/iscsi/password: admin
+      extrootfs.io/iscsi/preempt-lun: "false"
     volumeHandle: pvc-72feb899-658f-41ad-840e-a4c3f07bc859
   persistentVolumeReclaimPolicy: Delete
   volumeMode: Filesystem
@@ -43,7 +44,7 @@ metadata:
 spec:
   storageClassName: manual-bind
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteOncePod
   resources:
     requests:
       storage: 20Gi
@@ -63,6 +64,8 @@ spec:
           value: device
         - name: EXTERNAL_ROOTFS_DEVICE_CONFIG
           value: "/opt/extrootfs/output/e84c8476-d159-4dd8-97fd-18967d88c010"
+        - name: EXTERNAL_ROOTFS_DEVICE_MOUNT_OPTS
+          value: "rw,nouuid"
       volumeMounts:                                                                # 注入上述 PVC，用于触发容器启动前设备的挂载
         - name: extrootfs
           mountPath: /tmp/extrootfs
